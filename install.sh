@@ -122,7 +122,7 @@ DEPS=(
   "fable~fable-recall (recall/indexing hooks)~command -v fable~command -v uv~uv tool install fable-recall"
   "flue~flue (desktop-app scripting bridge skill)~command -v flue~command -v uv~uv tool install flue"
   "claudetell~claudetell (session traffic-light overlay)~test -f '$CLAUDETELL_DIR/claudetell.py'~command -v git~git clone https://github.com/FoamScience/claudetell.git '$CLAUDETELL_DIR'~clones https://github.com/FoamScience/claudetell.git into $CLAUDETELL_DIR"
-  "waggle~waggle~command -v waggle~command -v cargo~cargo install waggle"
+  "waggle~waggle~command -v waggle~command -v cargo~cargo install waggle-cli"
 )
 
 # Packaging toolchains the deps rely on. We never install these — only report

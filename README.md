@@ -69,7 +69,7 @@ rely on. Each tool is installed only if you select it and its toolchain is prese
 | `fable` | `uv tool install fable-recall` | uv |
 | `flue` | `uv tool install flue` | uv |
 | `claudetell` | `git clone …/claudetell.git → $CLAUDETELL_DIR` (asks first) | git |
-| `waggle` | `cargo install waggle` | cargo |
+| `waggle` | `cargo install waggle-cli` | cargo |
 
 `claudetell` ([FoamScience/claudetell](https://github.com/FoamScience/claudetell))
 is a local session traffic-light overlay. Because selecting it clones a
