@@ -68,13 +68,15 @@ rely on. Each tool is installed only if you select it and its toolchain is prese
 | `cavemem` | `npm install -g cavemem` | npm |
 | `fable` | `uv tool install fable-recall` | uv |
 | `flue` | `uv tool install flue` | uv |
-| `claudetell` | `git clone …/claudetell.git → $CLAUDETELL_DIR` (asks first) | git |
+| `claudetell` | clone + its own installer (asks first) | git, uv |
 | `waggle` | `cargo install waggle-cli` | cargo |
 
 `claudetell` ([FoamScience/claudetell](https://github.com/FoamScience/claudetell))
-is a local session traffic-light overlay. Because selecting it clones a
-third-party repo onto your machine, the menu shows the URL and asks for explicit
-`[y/N]` confirmation before cloning.
+is a local session traffic-light overlay. Selecting it clones the third-party
+repo (the menu shows the URL and asks for explicit `[y/N]` confirmation first),
+then runs `uv sync` + `uv run claudetell.py install` — **claudetell registers
+its own hooks** in `settings.json` (with machine-correct paths). This repo does
+**not** ship claudetell hooks in the `--personal` fragment.
 
 
 ### Bundled marketplaces
@@ -94,9 +96,8 @@ lacks them. It assumes:
 |------|-------------------|---------|
 | `cavemem` | npm global bin on `PATH` | memory MCP + session hooks |
 | `fable` | bin on `PATH` | recall/indexing hooks |
-| `claudetell` | `$CLAUDETELL_DIR` or `$HOME/repo/claudetell/claudetell.py` | session traffic-light overlay hooks |
 
-Install these from the `deps` menu, then edit the paths above if yours differ
-before using `--personal`. This fragment also re-adds the
+Install these from the `deps` menu before using `--personal`. This fragment also
+re-adds the
 `skip*` permission-prompt flags that the base config deliberately leaves out
 (see below).

@@ -1,5 +1,5 @@
 {
-  "_comment": "OPT-IN fragment. These hooks require private tools installed on PATH or at fixed paths: cavemem (npm global bin), fable (bin), claudetell (python at $CLAUDETELL_DIR or $HOME/repo/claudetell). Merged only with `install.sh --personal`. Edit paths to match your machine before enabling.",
+  "_comment": "OPT-IN fragment. These hooks require private tools on PATH: cavemem (npm global bin) and fable (bin). Merged only with `install.sh --personal`. claudetell is NOT here — it registers its own hooks via its CLI (uv run claudetell.py install).",
   "skipDangerousModePermissionPrompt": true,
   "skipWorkflowUsageWarning": true,
   "skipAutoPermissionPrompt": true,
@@ -29,15 +29,6 @@
           {
             "type": "command",
             "command": "cavemem hook run user-prompt-submit --ide claude-code"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"${CLAUDETELL_DIR:-$HOME/repo/claudetell}/claudetell.py\" hook",
-            "timeout": 10
           }
         ]
       },
@@ -82,15 +73,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${CLAUDETELL_DIR:-$HOME/repo/claudetell}/claudetell.py\" hook",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
             "command": "fable hook"
           }
         ]
@@ -104,28 +86,9 @@
             "command": "cavemem hook run session-end --ide claude-code"
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"${CLAUDETELL_DIR:-$HOME/repo/claudetell}/claudetell.py\" hook",
-            "timeout": 10
-          }
-        ]
       }
     ],
     "PreToolUse": [
-      {
-        "matcher": "Bash|ScheduleWakeup|CronCreate",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"${CLAUDETELL_DIR:-$HOME/repo/claudetell}/claudetell.py\" hook",
-            "timeout": 10
-          }
-        ]
-      },
       {
         "matcher": "Edit|Write|MultiEdit",
         "hooks": [
@@ -137,43 +100,12 @@
         ]
       }
     ],
-    "SubagentStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"${CLAUDETELL_DIR:-$HOME/repo/claudetell}/claudetell.py\" hook",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
     "SubagentStop": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${CLAUDETELL_DIR:-$HOME/repo/claudetell}/claudetell.py\" hook",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
             "command": "fable hook"
-          }
-        ]
-      }
-    ],
-    "StopFailure": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"${CLAUDETELL_DIR:-$HOME/repo/claudetell}/claudetell.py\" hook",
-            "timeout": 10
           }
         ]
       }

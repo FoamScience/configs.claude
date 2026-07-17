@@ -116,12 +116,18 @@ PY
 # Each record: key|label|check-cmd|prereq-cmd|install-cmd
 CLAUDETELL_DIR="${CLAUDETELL_DIR:-$HOME/repo/claudetell}"
 
+install_claudetell() { # clone, then let claudetell register its OWN hooks via its CLI
+  local dir="$CLAUDETELL_DIR"
+  [ -d "$dir/.git" ] || git clone https://github.com/FoamScience/claudetell.git "$dir" || return 1
+  ( cd "$dir" && uv sync && uv run claudetell.py install )
+}
+
 # Records are ~-delimited: key~label~check~prereq~install  (checks may contain pipes)
 DEPS=(
   "cavemem~cavemem (caveman memory MCP + hooks)~command -v cavemem~command -v npm~npm install -g cavemem"
   "fable~fable-recall (recall/indexing hooks)~command -v fable~command -v uv~uv tool install fable-recall"
   "flue~flue (desktop-app scripting bridge skill)~command -v flue~command -v uv~uv tool install flue"
-  "claudetell~claudetell (session traffic-light overlay)~test -f '$CLAUDETELL_DIR/claudetell.py'~command -v git~git clone https://github.com/FoamScience/claudetell.git '$CLAUDETELL_DIR'~clones https://github.com/FoamScience/claudetell.git into $CLAUDETELL_DIR"
+  "claudetell~claudetell (session traffic-light overlay)~test -f '$CLAUDETELL_DIR/claudetell.py'~command -v git && command -v uv~install_claudetell~clones FoamScience/claudetell into $CLAUDETELL_DIR, then runs its own installer (uv sync + claudetell.py install) which registers claudetell's hooks in settings.json"
   "waggle~waggle~command -v waggle~command -v cargo~cargo install waggle-cli"
 )
 
