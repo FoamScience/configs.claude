@@ -72,11 +72,12 @@ rely on. Each tool is installed only if you select it and its toolchain is prese
 | `waggle` | `cargo install waggle-cli` | cargo |
 
 `claudetell` ([FoamScience/claudetell](https://github.com/FoamScience/claudetell))
-is a local session traffic-light overlay. Selecting it clones the third-party
-repo (the menu shows the URL and asks for explicit `[y/N]` confirmation first),
-then runs `uv sync` + `uv run claudetell.py install` — **claudetell registers
-its own hooks** in `settings.json` (with machine-correct paths). This repo does
-**not** ship claudetell hooks in the `--personal` fragment.
+is a local session traffic-light overlay. Selecting it asks for `[y/N]`
+confirmation and a target directory (default `$CLAUDETELL_DIR`), then **clones**
+the repo there — or **`git pull`s** it if the directory already exists — and runs
+`uv sync` + `uv run claudetell.py install`. **claudetell registers its own hooks**
+in `settings.json` (with machine-correct paths); this repo does **not** ship
+claudetell hooks in the `--personal` fragment.
 
 
 ### Bundled marketplaces
