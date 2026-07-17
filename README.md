@@ -75,7 +75,7 @@ rely on. Each tool is installed only if you select it and its toolchain is prese
 is a local session traffic-light overlay. Selecting it asks for `[y/N]`
 confirmation, then **presents an fzf picker of destinations** (or type your own
 path); it **clones** the repo there — or **`git pull`s** it if that directory
-already exists — and runs `uv sync` + `uv run claudetell.py install`. **claudetell
+already exists — and runs `uv run claudetell.py install`. **claudetell
 registers its own hooks** in `settings.json` (with machine-correct paths); this
 repo does **not** ship claudetell hooks in the `--personal` fragment.
 

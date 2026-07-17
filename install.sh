@@ -13,6 +13,20 @@ PERSONAL=0
 DRY=0
 COMPONENTS=()
 
+# --- pretty output (ANSI only; disabled when not a TTY or NO_COLOR is set) ---
+if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
+  _B=$'\e[1m' _D=$'\e[2m' _R=$'\e[0m'
+  _G=$'\e[32m' _Y=$'\e[33m' _E=$'\e[31m' _C=$'\e[36m' _U=$'\e[34m'
+else
+  _B='' _D='' _R='' _G='' _Y='' _E='' _C='' _U=''
+fi
+head() { printf '\n%s%s❯ %s%s\n' "$_B" "$_C" "$*" "$_R"; }
+step() { printf '  %s▸%s %s\n' "$_U" "$_R" "$*"; }
+ok()   { printf '  %s✓%s %s\n' "$_G" "$_R" "$*"; }
+warn() { printf '  %s!%s %s\n' "$_Y" "$_R" "$*"; }
+err()  { printf '  %s✗%s %s\n' "$_E" "$_R" "$*"; }
+info() { printf '  %s·%s %s\n' "$_D" "$_R" "$_D$*$_R"; }
+
 usage() {
   cat <<EOF
 Usage: ./install.sh [--personal] [--dry-run] [components...]
@@ -85,15 +99,15 @@ merge_settings() {
   local personal=""
   [ "$PERSONAL" = 1 ] && personal="$REPO/settings/settings.personal.json"
   [ -f "$dest" ] && {
-    echo "back $dest -> $dest.bak-$STAMP"
+    info "backup ${dest/#$HOME/\~} -> …bak-$STAMP"
     run "cp \"$dest\" \"$dest.bak-$STAMP\""
   }
   run "mkdir -p \"$CLAUDE_DIR\""
   if [ "$DRY" = 1 ]; then
-    echo "DRY  merge $base ${personal:+and $personal} into $dest"
+    printf '  %sdry%s merge base%s into %s\n' "$_D" "$_R" "${personal:+ + personal}" "${dest/#$HOME/\~}"
     return
   fi
-  python3 - "$dest" "$base" "$personal" <<'PY'
+  if python3 - "$dest" "$base" "$personal" <<'PY'
 import json, sys, os
 dest, base, personal = sys.argv[1], sys.argv[2], sys.argv[3]
 
@@ -144,17 +158,18 @@ install_claudetell() { # present a destination, clone (or pull if present), then
     fzf --print-query --prompt='clone claudetell to> ' \
       --header='pick a destination or type a path, ENTER to confirm' | tail -1)
   [ -z "$dir" ] && {
-    echo "claudetell: no destination chosen"
+    warn "claudetell: no destination chosen"
     return 1
   }
   dir="${dir/#\~/$HOME}"
   if [ -d "$dir/.git" ]; then
-    echo "claudetell: updating existing clone in $dir"
+    step "claudetell: updating existing clone in ${dir/#$HOME/\~}"
     git -C "$dir" pull --ff-only || return 1
   elif [ -e "$dir" ]; then
-    echo "claudetell: $dir exists but is not a git clone — aborting"
+    err "claudetell: ${dir/#$HOME/\~} exists but is not a git clone — aborting"
     return 1
   else
+    step "claudetell: cloning into ${dir/#$HOME/\~}"
     git clone https://github.com/FoamScience/claudetell.git "$dir" || return 1
   fi
   (cd "$dir" && uv run claudetell.py install)
@@ -165,7 +180,7 @@ DEPS=(
   "cavemem~cavemem (caveman memory MCP + hooks)~command -v cavemem~command -v npm~npm install -g cavemem"
   "fable~fable-recall (recall/indexing hooks)~command -v fable~command -v uv~uv tool install fable-recall"
   "flue~flue (desktop-app scripting bridge skill)~command -v flue~command -v uv~uv tool install flue"
-  "claudetell~claudetell (session traffic-light overlay)~test -f '$CLAUDETELL_DIR/claudetell.py'~command -v git && command -v uv~install_claudetell~presents destinations to pick (or type a path), clones FoamScience/claudetell there (or git pull if already present), then runs its own installer (uv sync + claudetell.py install) which registers claudetell's hooks in settings.json"
+  "claudetell~claudetell (session traffic-light overlay)~test -f '$CLAUDETELL_DIR/claudetell.py'~command -v git && command -v uv~install_claudetell~presents destinations to pick (or type a path), clones FoamScience/claudetell there (or git pull if already present), then runs its own installer (uv run claudetell.py install) which registers claudetell's hooks in settings.json"
   "waggle~waggle~command -v waggle~command -v cargo~cargo install waggle-cli"
 )
 
@@ -225,7 +240,7 @@ deps_menu() {
     --header=$'TAB to select multiple, ENTER to confirm, ESC to skip\ninstall external tools:' \
     --prompt='deps> ' | cut -f1) || true
   [ -z "$picks" ] && {
-    echo "deps: nothing selected."
+    info "deps: nothing selected"
     return
   }
 
@@ -236,41 +251,51 @@ deps_menu() {
       IFS='~' read -r key label check prereq install consent <<<"$rec"
       [ "$key" = "$p" ] || continue
       if ! eval "$prereq" >/dev/null 2>&1; then
-        echo "SKIP $key: prereq missing ($prereq)"
+        warn "$key skipped: prereq missing ($prereq)"
         break
       fi
       if [ -n "$consent" ]; then
-        printf '%s %s\nproceed? [y/N] ' "$key:" "$consent"
+        printf '\n  %s%s%s %s\n  proceed? [y/N] ' "$_B" "$key" "$_R" "$consent"
         read -r ans </dev/tty || ans=""
         case "$ans" in [Yy]*) ;; *)
-          echo "skip $key (declined)"
+          warn "$key declined"
           break
           ;;
         esac
       fi
-      echo "==> $install"
-      eval "$install" && echo "OK   $key" || echo "FAIL $key"
+      step "installing $key"
+      if eval "$install"; then ok "$key installed"; else err "$key failed"; fi
       break
     done
   done <<<"$picks"
 }
 
-echo "repo:       $REPO"
-echo "target:     $CLAUDE_DIR"
 SUFFIX=""
 [ "$PERSONAL" = 1 ] && SUFFIX=" +personal"
-echo "components: ${COMPONENTS[*]}$SUFFIX"
-echo
+[ "$DRY" = 1 ] && SUFFIX="$SUFFIX (dry-run)"
+printf '\n%s%s  Claude Code config installer  %s\n' "$_B" "$_C" "$_R"
+info "repo    ${REPO/#$HOME/\~}"
+info "target  ${CLAUDE_DIR/#$HOME/\~}"
+info "steps   ${COMPONENTS[*]}$SUFFIX"
 
-has settings && merge_settings
-if has rules; then for f in "$REPO"/home/rules/*; do link "home/rules/$(basename "$f")" "$CLAUDE_DIR/rules/$(basename "$f")"; done; fi
-if has hooks; then for f in "$REPO"/home/hooks/*; do link "home/hooks/$(basename "$f")" "$CLAUDE_DIR/hooks/$(basename "$f")"; done; fi
+has settings && {
+  head "settings"
+  merge_settings
+}
+has rules && {
+  head "rules"
+  for f in "$REPO"/home/rules/*; do link "home/rules/$(basename "$f")" "$CLAUDE_DIR/rules/$(basename "$f")"; done
+}
+has hooks && {
+  head "hooks"
+  for f in "$REPO"/home/hooks/*; do link "home/hooks/$(basename "$f")" "$CLAUDE_DIR/hooks/$(basename "$f")"; done
+}
 has deps && {
-  echo
   check_toolchains
+  head "dependency tools"
   deps_menu
 }
 
-echo
-echo "done. Restart Claude Code so it picks up settings + plugins."
-[ "$PERSONAL" = 0 ] && echo "note: personal hooks NOT installed. Re-run with --personal once the deps are in place."
+head "done"
+ok "restart Claude Code so it picks up settings + plugins"
+[ "$PERSONAL" = 0 ] && info "personal hooks not installed — re-run with --personal once deps are in place"
