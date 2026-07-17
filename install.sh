@@ -116,11 +116,14 @@ PY
 # Each record: key|label|check-cmd|prereq-cmd|install-cmd
 CLAUDETELL_DIR="${CLAUDETELL_DIR:-$HOME/repo/claudetell}"
 
-install_claudetell() { # pick a dir, clone (or pull if present), then let claudetell register its OWN hooks
+install_claudetell() { # present a destination, clone (or pull if present), then let claudetell register its OWN hooks
   local dir
-  printf 'claudetell dir [%s]: ' "$CLAUDETELL_DIR"
-  read -r dir </dev/tty || dir=""
-  dir="${dir:-$CLAUDETELL_DIR}"
+  dir=$(printf '%s\n' "$CLAUDETELL_DIR" "$HOME/repo/claudetell" "$HOME/projects/claudetell" \
+        "$HOME/src/claudetell" "$HOME/code/claudetell" "$PWD/claudetell" \
+        | awk 'NF && !seen[$0]++' \
+        | fzf --print-query --prompt='clone claudetell to> ' \
+              --header='pick a destination or type a path, ENTER to confirm' | tail -1)
+  [ -z "$dir" ] && { echo "claudetell: no destination chosen"; return 1; }
   dir="${dir/#\~/$HOME}"
   if [ -d "$dir/.git" ]; then
     echo "claudetell: updating existing clone in $dir"
@@ -138,7 +141,7 @@ DEPS=(
   "cavemem~cavemem (caveman memory MCP + hooks)~command -v cavemem~command -v npm~npm install -g cavemem"
   "fable~fable-recall (recall/indexing hooks)~command -v fable~command -v uv~uv tool install fable-recall"
   "flue~flue (desktop-app scripting bridge skill)~command -v flue~command -v uv~uv tool install flue"
-  "claudetell~claudetell (session traffic-light overlay)~test -f '$CLAUDETELL_DIR/claudetell.py'~command -v git && command -v uv~install_claudetell~asks for a target dir (default $CLAUDETELL_DIR), clones FoamScience/claudetell there (or git pull if already present), then runs its own installer (uv sync + claudetell.py install) which registers claudetell's hooks in settings.json"
+  "claudetell~claudetell (session traffic-light overlay)~test -f '$CLAUDETELL_DIR/claudetell.py'~command -v git && command -v uv~install_claudetell~presents destinations to pick (or type a path), clones FoamScience/claudetell there (or git pull if already present), then runs its own installer (uv sync + claudetell.py install) which registers claudetell's hooks in settings.json"
   "waggle~waggle~command -v waggle~command -v cargo~cargo install waggle-cli"
 )
 
