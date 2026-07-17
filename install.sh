@@ -72,25 +72,25 @@ has() {
   for c in "${COMPONENTS[@]}"; do [ "$c" = "$1" ] && return 0; done
   return 1
 }
-run() { if [ "$DRY" = 1 ]; then echo "DRY  $*"; else eval "$@"; fi; }
+run() { if [ "$DRY" = 1 ]; then printf '  %sdry%s %s\n' "$_D" "$_R" "$*"; else eval "$@"; fi; }
 
 link() { # link <repo-relative-src> <abs-dest>
   local src="$REPO/$1" dest="$2"
   [ -e "$src" ] || {
-    echo "skip (missing): $1"
+    warn "missing, skipped: $1"
     return
   }
   run "mkdir -p \"$(dirname "$dest")\""
   if [ -L "$dest" ] && [ "$(readlink "$dest")" = "$src" ]; then
-    echo "ok   $dest"
+    ok "linked already: ${dest/#$HOME/\~}"
     return
   fi
   if [ -e "$dest" ] || [ -L "$dest" ]; then
-    echo "back $dest -> $dest.bak-$STAMP"
+    info "backup ${dest/#$HOME/\~} -> …bak-$STAMP"
     run "mv \"$dest\" \"$dest.bak-$STAMP\""
   fi
   run "ln -s \"$src\" \"$dest\""
-  echo "link $dest"
+  ok "linked ${dest/#$HOME/\~}"
 }
 
 merge_settings() {
@@ -211,33 +211,32 @@ TOOLCHAINS=(
 )
 
 check_toolchains() {
-  echo "toolchains (install any missing one yourself — links below):"
+  head "toolchains (install any missing one yourself)"
   local rec name check url miss=0
   for rec in "${TOOLCHAINS[@]}"; do
     IFS='~' read -r name check url <<<"$rec"
     if eval "$check" >/dev/null 2>&1; then
-      printf '  ✓ %-7s\n' "$name"
+      printf '  %s✓%s %-6s\n' "$_G" "$_R" "$name"
     else
-      printf '  ✗ %-7s → %s\n' "$name" "$url"
+      printf '  %s✗%s %-6s %s→%s %s\n' "$_E" "$_R" "$name" "$_D" "$_R" "$url"
       miss=1
     fi
   done
-  [ "$miss" = 1 ] && echo "  (install the ✗ ones above, then re-run — nothing is installed for you here)"
-  echo
+  [ "$miss" = 1 ] && info "install the ✗ ones above, then re-run — nothing is installed for you here"
 }
 
 deps_menu() {
   if [ "$DRY" = 1 ]; then
-    echo "DRY  skip deps menu (interactive)"
+    info "dry-run: deps menu skipped (interactive)"
     return
   fi
   if [ ! -t 0 ] || [ ! -t 1 ]; then
-    echo "deps: skipped (no TTY). Run ./install.sh deps interactively."
+    warn "deps skipped (no TTY). Run ./install.sh deps interactively."
     return
   fi
   if ! command -v fzf >/dev/null 2>&1; then
-    echo "deps: fzf not found (the menu needs it). Install fzf first:"
-    echo "        apt install fzf   |   brew install fzf   |   https://github.com/junegunn/fzf"
+    warn "fzf not found (the menu needs it). Install fzf first:"
+    info "apt install fzf  |  brew install fzf  |  https://github.com/junegunn/fzf"
     return
   fi
 
