@@ -1,0 +1,13 @@
+# Never commit secrets or machine-local state
+.credentials.json
+policy-limits.json
+remote-settings.json
+*.local.json
+
+# Backups the installer creates
+*.bak
+*.bak-*
+*.bak.*
+
+# OS noise
+.DS_Store
