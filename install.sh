@@ -59,7 +59,7 @@ for arg in "$@"; do
     exit 0
     ;;
   --*)
-    echo "unknown flag: $arg" >&2
+    err "unknown flag: $arg" >&2
     usage
     exit 1
     ;;
@@ -123,31 +123,40 @@ def strip(v):  # recursively drop _comment keys
         return [strip(x) for x in v]
     return v
 
-def merge(a, b, concat):
+def merge(a, b, keep_scalar):
+    # dicts: recurse, adding keys present only in b.
+    # lists: union — append b's items that a doesn't already have (no duplicates).
+    # scalars: keep_scalar True keeps a (the existing value); else b wins.
     if isinstance(a, dict) and isinstance(b, dict):
         out = dict(a)
         for k, v in b.items():
             if k.startswith("_"):
                 continue
-            out[k] = merge(a.get(k), v, concat) if k in a else strip(v)
+            out[k] = merge(out[k], v, keep_scalar) if k in out else strip(v)
         return out
-    if isinstance(a, list) and isinstance(b, list) and concat:
-        return a + b
-    return strip(b)
+    if isinstance(a, list) and isinstance(b, list):
+        out = list(a)
+        for item in b:
+            si = strip(item)
+            if si not in out:
+                out.append(si)
+        return out
+    return a if keep_scalar else strip(b)
 
 ours = load(base)
 if personal:
-    ours = merge(ours, load(personal), concat=True)   # concat hook arrays
+    ours = merge(ours, load(personal), keep_scalar=False)  # personal wins; hooks unioned
 existing = load(dest)
-final = merge(existing, ours, concat=False)            # our config wins over existing
+# non-destructive: keep your existing values, add what's missing, union hooks, no dupes
+final = merge(existing, ours, keep_scalar=True)
 with open(dest, "w") as f:
     json.dump(final, f, indent=2); f.write("\n")
-print("merged settings -> " + dest)
 PY
+  then ok "settings.json merged${personal:+ (base + personal)}"
+  else err "settings.json merge failed"; fi
 }
 
 # --- dependency software (external tools the hooks / skills need) ---
-# Each record: key|label|check-cmd|prereq-cmd|install-cmd
 CLAUDETELL_DIR="${CLAUDETELL_DIR:-$HOME/repo/claudetell}"
 
 install_claudetell() { # present a destination, clone (or pull if present), then let claudetell register its OWN hooks

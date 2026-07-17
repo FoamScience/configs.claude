@@ -37,8 +37,10 @@ plugins listed in `enabledPlugins`.
   pre-existing file at a target is backed up to `*.bak-<timestamp>` first.
 - **settings.json is merged, not symlinked** — Claude Code rewrites it at
   runtime (plugin toggles, timestamps), and you may already have one. The
-  installer deep-merges: **this repo's values win**, your other keys are kept,
-  and the previous file is backed up. Re-running is idempotent.
+  installer merges **non-destructively**: it adds what's missing, unions hook
+  arrays without duplicating, and **keeps your existing values on any conflict**
+  (your model, your disabled plugins, your own hooks all survive). The previous
+  file is backed up, and re-running is idempotent (no duplicate growth).
 - Set `CLAUDE_CONFIG_DIR` to target a config dir other than `~/.claude`.
 
 ## Choosing what to install (full control)
