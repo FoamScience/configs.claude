@@ -38,24 +38,38 @@ EOF
 
 for arg in "$@"; do
   case "$arg" in
-    --personal) PERSONAL=1 ;;
-    --dry-run)  DRY=1 ;;
-    --help|-h)  usage; exit 0 ;;
-    --*)        echo "unknown flag: $arg" >&2; usage; exit 1 ;;
-    *)          COMPONENTS+=("$arg") ;;
+  --personal) PERSONAL=1 ;;
+  --dry-run) DRY=1 ;;
+  --help | -h)
+    usage
+    exit 0
+    ;;
+  --*)
+    echo "unknown flag: $arg" >&2
+    usage
+    exit 1
+    ;;
+  *) COMPONENTS+=("$arg") ;;
   esac
 done
 [ ${#COMPONENTS[@]} -eq 0 ] && COMPONENTS=(settings rules hooks deps)
 
-has() { for c in "${COMPONENTS[@]}"; do [ "$c" = "$1" ] && return 0; done; return 1; }
+has() {
+  for c in "${COMPONENTS[@]}"; do [ "$c" = "$1" ] && return 0; done
+  return 1
+}
 run() { if [ "$DRY" = 1 ]; then echo "DRY  $*"; else eval "$@"; fi; }
 
 link() { # link <repo-relative-src> <abs-dest>
   local src="$REPO/$1" dest="$2"
-  [ -e "$src" ] || { echo "skip (missing): $1"; return; }
+  [ -e "$src" ] || {
+    echo "skip (missing): $1"
+    return
+  }
   run "mkdir -p \"$(dirname "$dest")\""
   if [ -L "$dest" ] && [ "$(readlink "$dest")" = "$src" ]; then
-    echo "ok   $dest"; return
+    echo "ok   $dest"
+    return
   fi
   if [ -e "$dest" ] || [ -L "$dest" ]; then
     echo "back $dest -> $dest.bak-$STAMP"
@@ -70,9 +84,15 @@ merge_settings() {
   local base="$REPO/settings/settings.base.json"
   local personal=""
   [ "$PERSONAL" = 1 ] && personal="$REPO/settings/settings.personal.json"
-  [ -f "$dest" ] && { echo "back $dest -> $dest.bak-$STAMP"; run "cp \"$dest\" \"$dest.bak-$STAMP\""; }
+  [ -f "$dest" ] && {
+    echo "back $dest -> $dest.bak-$STAMP"
+    run "cp \"$dest\" \"$dest.bak-$STAMP\""
+  }
   run "mkdir -p \"$CLAUDE_DIR\""
-  if [ "$DRY" = 1 ]; then echo "DRY  merge $base ${personal:+and $personal} into $dest"; return; fi
+  if [ "$DRY" = 1 ]; then
+    echo "DRY  merge $base ${personal:+and $personal} into $dest"
+    return
+  fi
   python3 - "$dest" "$base" "$personal" <<'PY'
 import json, sys, os
 dest, base, personal = sys.argv[1], sys.argv[2], sys.argv[3]
@@ -119,21 +139,25 @@ CLAUDETELL_DIR="${CLAUDETELL_DIR:-$HOME/repo/claudetell}"
 install_claudetell() { # present a destination, clone (or pull if present), then let claudetell register its OWN hooks
   local dir
   dir=$(printf '%s\n' "$CLAUDETELL_DIR" "$HOME/repo/claudetell" "$HOME/projects/claudetell" \
-        "$HOME/src/claudetell" "$HOME/code/claudetell" "$PWD/claudetell" \
-        | awk 'NF && !seen[$0]++' \
-        | fzf --print-query --prompt='clone claudetell to> ' \
-              --header='pick a destination or type a path, ENTER to confirm' | tail -1)
-  [ -z "$dir" ] && { echo "claudetell: no destination chosen"; return 1; }
+    "$HOME/src/claudetell" "$HOME/code/claudetell" "$PWD/claudetell" |
+    awk 'NF && !seen[$0]++' |
+    fzf --print-query --prompt='clone claudetell to> ' \
+      --header='pick a destination or type a path, ENTER to confirm' | tail -1)
+  [ -z "$dir" ] && {
+    echo "claudetell: no destination chosen"
+    return 1
+  }
   dir="${dir/#\~/$HOME}"
   if [ -d "$dir/.git" ]; then
     echo "claudetell: updating existing clone in $dir"
     git -C "$dir" pull --ff-only || return 1
   elif [ -e "$dir" ]; then
-    echo "claudetell: $dir exists but is not a git clone — aborting"; return 1
+    echo "claudetell: $dir exists but is not a git clone — aborting"
+    return 1
   else
     git clone https://github.com/FoamScience/claudetell.git "$dir" || return 1
   fi
-  ( cd "$dir" && uv sync && uv run claudetell.py install )
+  (cd "$dir" && uv run claudetell.py install)
 }
 
 # Records are ~-delimited: key~label~check~prereq~install  (checks may contain pipes)
@@ -164,7 +188,8 @@ check_toolchains() {
     if eval "$check" >/dev/null 2>&1; then
       printf '  ✓ %-7s\n' "$name"
     else
-      printf '  ✗ %-7s → %s\n' "$name" "$url"; miss=1
+      printf '  ✗ %-7s → %s\n' "$name" "$url"
+      miss=1
     fi
   done
   [ "$miss" = 1 ] && echo "  (install the ✗ ones above, then re-run — nothing is installed for you here)"
@@ -172,8 +197,14 @@ check_toolchains() {
 }
 
 deps_menu() {
-  if [ "$DRY" = 1 ]; then echo "DRY  skip deps menu (interactive)"; return; fi
-  if [ ! -t 0 ] || [ ! -t 1 ]; then echo "deps: skipped (no TTY). Run ./install.sh deps interactively."; return; fi
+  if [ "$DRY" = 1 ]; then
+    echo "DRY  skip deps menu (interactive)"
+    return
+  fi
+  if [ ! -t 0 ] || [ ! -t 1 ]; then
+    echo "deps: skipped (no TTY). Run ./install.sh deps interactively."
+    return
+  fi
   if ! command -v fzf >/dev/null 2>&1; then
     echo "deps: fzf not found (the menu needs it). Install fzf first:"
     echo "        apt install fzf   |   brew install fzf   |   https://github.com/junegunn/fzf"
@@ -184,7 +215,8 @@ deps_menu() {
   local lines="" rec key label check
   for rec in "${DEPS[@]}"; do
     IFS='~' read -r key label check _ _ <<<"$rec"
-    if eval "$check" >/dev/null 2>&1; then lines+="$key\t$label\t✓ installed\n"
+    if eval "$check" >/dev/null 2>&1; then
+      lines+="$key\t$label\t✓ installed\n"
     else lines+="$key\t$label\t· available\n"; fi
   done
 
@@ -192,7 +224,10 @@ deps_menu() {
   picks=$(printf "%b" "$lines" | fzf --multi --with-nth=2,3 --delimiter='\t' \
     --header=$'TAB to select multiple, ENTER to confirm, ESC to skip\ninstall external tools:' \
     --prompt='deps> ' | cut -f1) || true
-  [ -z "$picks" ] && { echo "deps: nothing selected."; return; }
+  [ -z "$picks" ] && {
+    echo "deps: nothing selected."
+    return
+  }
 
   local p
   while IFS= read -r p; do
@@ -201,12 +236,17 @@ deps_menu() {
       IFS='~' read -r key label check prereq install consent <<<"$rec"
       [ "$key" = "$p" ] || continue
       if ! eval "$prereq" >/dev/null 2>&1; then
-        echo "SKIP $key: prereq missing ($prereq)"; break
+        echo "SKIP $key: prereq missing ($prereq)"
+        break
       fi
       if [ -n "$consent" ]; then
         printf '%s %s\nproceed? [y/N] ' "$key:" "$consent"
         read -r ans </dev/tty || ans=""
-        case "$ans" in [Yy]*) ;; *) echo "skip $key (declined)"; break;; esac
+        case "$ans" in [Yy]*) ;; *)
+          echo "skip $key (declined)"
+          break
+          ;;
+        esac
       fi
       echo "==> $install"
       eval "$install" && echo "OK   $key" || echo "FAIL $key"
@@ -217,14 +257,19 @@ deps_menu() {
 
 echo "repo:       $REPO"
 echo "target:     $CLAUDE_DIR"
-SUFFIX=""; [ "$PERSONAL" = 1 ] && SUFFIX=" +personal"
+SUFFIX=""
+[ "$PERSONAL" = 1 ] && SUFFIX=" +personal"
 echo "components: ${COMPONENTS[*]}$SUFFIX"
 echo
 
 has settings && merge_settings
 if has rules; then for f in "$REPO"/home/rules/*; do link "home/rules/$(basename "$f")" "$CLAUDE_DIR/rules/$(basename "$f")"; done; fi
 if has hooks; then for f in "$REPO"/home/hooks/*; do link "home/hooks/$(basename "$f")" "$CLAUDE_DIR/hooks/$(basename "$f")"; done; fi
-has deps && { echo; check_toolchains; deps_menu; }
+has deps && {
+  echo
+  check_toolchains
+  deps_menu
+}
 
 echo
 echo "done. Restart Claude Code so it picks up settings + plugins."
