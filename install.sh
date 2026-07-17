@@ -184,6 +184,11 @@ install_claudetell() { # present a destination, clone (or pull if present), then
   (cd "$dir" && uv run claudetell.py install)
 }
 
+install_styleseed() { # StyleSeed UI design gate — installs via its own `skills` CLI (npx)
+  npx skills add bitjaru/styleseed || return 1
+  info "then run /ss-setup in Claude Code to lock your color/font/motion"
+}
+
 # Records are ~-delimited: key~label~check~prereq~install  (checks may contain pipes)
 DEPS=(
   "cavemem~cavemem (caveman memory MCP + hooks)~command -v cavemem~command -v npm~npm install -g cavemem"
@@ -191,6 +196,7 @@ DEPS=(
   "flue~flue (desktop-app scripting bridge skill)~command -v flue~command -v uv~uv tool install flue"
   "claudetell~claudetell (session traffic-light overlay)~test -f '$CLAUDETELL_DIR/claudetell.py'~command -v git && command -v uv~install_claudetell~presents destinations to pick (or type a path), clones FoamScience/claudetell there (or git pull if already present), then runs its own installer (uv run claudetell.py install) which registers claudetell's hooks in settings.json"
   "waggle~waggle~command -v waggle~command -v cargo~cargo install waggle-cli"
+  "styleseed~styleseed-design-review (UI 'looks AI-generated' gate)~test -d '$CLAUDE_DIR/skills/styleseed-design-review' || test -d '$HOME/.agents/skills/styleseed-design-review'~command -v npx~install_styleseed~runs 'npx skills add bitjaru/styleseed', installing StyleSeed's skills into your agent config and writing its rules files"
 )
 
 # Packaging toolchains the deps rely on. We never install these — only report

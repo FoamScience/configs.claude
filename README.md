@@ -72,6 +72,7 @@ rely on. Each tool is installed only if you select it and its toolchain is prese
 | `flue` | `uv tool install flue` | uv |
 | `claudetell` | clone + its own installer (asks first) | git, uv |
 | `waggle` | `cargo install waggle-cli` | cargo |
+| `styleseed` | `npx skills add bitjaru/styleseed` (asks first) | npx (node) |
 
 `claudetell` ([FoamScience/claudetell](https://github.com/FoamScience/claudetell))
 is a local session traffic-light overlay. Selecting it asks for `[y/N]`
@@ -80,6 +81,12 @@ path); it **clones** the repo there — or **`git pull`s** it if that directory
 already exists — and runs `uv run claudetell.py install`. **claudetell
 registers its own hooks** in `settings.json` (with machine-correct paths); this
 repo does **not** ship claudetell hooks in the `--personal` fragment.
+
+`styleseed` ([bitjaru/styleseed](https://github.com/bitjaru/styleseed)) is the
+StyleSeed UI design gate — a set of skills that flag "looks AI-generated" UI and
+enforce a quality score. Installed the original way, via its own `skills` CLI:
+`npx skills add bitjaru/styleseed` (consent-gated, since it writes skills + rules
+files into your agent config). After install, run `/ss-setup` in Claude Code.
 
 
 ### Bundled marketplaces
