@@ -52,8 +52,9 @@ plugins listed in `enabledPlugins`.
 - **File components** — pass only the ones you want as arguments, or `rm` a
   symlink later.
 - **Dependency software** — the `deps` step opens an `fzf` multi-select; nothing
-  installs unless you tick it. Already-installed tools are marked `✓`.
-- **Personal hooks** — off unless you pass `--personal`.
+  installs unless you tick it. Already-installed tools are marked `✓` and skipped
+  (an existence check precedes every install).
+- **Personal skip-flags** — off unless you pass `--personal`.
 
 ## Dependency software (`deps`)
 
@@ -63,16 +64,25 @@ with an install link. These packaging managers are **never installed for you**;
 you install any missing one yourself, then re-run.
 
 It then opens an `fzf` menu to install the external tools the hooks and skills
-rely on. Each tool is installed only if you select it and its toolchain is present:
+rely on. Each is installed the way **its own README suggests** (no `apt`/system
+package managers; `uv tool` for Python, the tool's own script otherwise), and
+only if you select it, its toolchain is present, and it isn't already installed
+(each install is preceded by an existence check):
 
 | Tool | Installs via | Prereq |
 |------|--------------|--------|
-| `cavemem` | `npm install -g cavemem` | npm |
-| `fable` | `uv tool install fable-recall` | uv |
+| `cavemem` | `npm install -g cavemem && cavemem install` | npm |
+| `fable` | `uv tool install fable-recall && fable install` | uv |
+| `caveman` | `curl -fsSL …/caveman/main/install.sh \| bash` (asks first) | node |
 | `flue` | `uv tool install flue` | uv |
 | `claudetell` | clone + its own installer (asks first) | git, uv |
 | `waggle` | `cargo install waggle-cli` | cargo |
 | `styleseed` | `npx skills add bitjaru/styleseed` (asks first) | npx (node) |
+
+`cavemem`, `fable`, and `claudetell` each **register their own hooks + MCP** into
+`settings.json` via their installer (`cavemem install`, `fable install`,
+`uv run claudetell.py install`) with machine-correct paths — so this repo ships
+**no** tool hooks in the `--personal` fragment.
 
 `claudetell` ([FoamScience/claudetell](https://github.com/FoamScience/claudetell))
 is a local session traffic-light overlay. Selecting it asks for `[y/N]`
@@ -88,6 +98,12 @@ enforce a quality score. Installed the original way, via its own `skills` CLI:
 `npx skills add bitjaru/styleseed` (consent-gated, since it writes skills + rules
 files into your agent config). After install, run `/ss-setup` in Claude Code.
 
+`caveman` ([JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman)) is
+the caveman-speak skill (fewer output tokens, code kept byte-exact). Installed
+its original way, the curl one-liner (consent-gated): `curl -fsSL
+https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash`.
+It's also available as the bundled `caveman@caveman` marketplace plugin.
+
 
 ### Bundled marketplaces
 
@@ -98,16 +114,8 @@ files into your agent config). After install, run `/ss-setup` in Claude Code.
 
 ## The `--personal` fragment
 
-`settings/settings.personal.json` holds hooks that call **private tools not in
-this repo**. It's excluded by default because it will error on a machine that
-lacks them. It assumes:
-
-| Tool | Expected location | Purpose |
-|------|-------------------|---------|
-| `cavemem` | npm global bin on `PATH` | memory MCP + session hooks |
-| `fable` | bin on `PATH` | recall/indexing hooks |
-
-Install these from the `deps` menu before using `--personal`. This fragment also
-re-adds the
-`skip*` permission-prompt flags that the base config deliberately leaves out
-(see below).
+`settings/settings.personal.json` now holds **only** the `skip*` permission-prompt
+flags that the base config deliberately leaves out (`skipDangerousModePermissionPrompt`,
+`skipWorkflowUsageWarning`, `skipAutoPermissionPrompt`) — see below. It ships **no
+tool hooks or MCP servers**: cavemem, fable, and claudetell each register their
+own from the `deps` menu, so there are no hardcoded machine paths to break.

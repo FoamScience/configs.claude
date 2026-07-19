@@ -191,8 +191,9 @@ install_styleseed() { # StyleSeed UI design gate — installs via its own `skill
 
 # Records are ~-delimited: key~label~check~prereq~install  (checks may contain pipes)
 DEPS=(
-  "cavemem~cavemem (caveman memory MCP + hooks)~command -v cavemem~command -v npm~npm install -g cavemem"
-  "fable~fable-recall (recall/indexing hooks)~command -v fable~command -v uv~uv tool install fable-recall"
+  "cavemem~cavemem (memory MCP + hooks)~command -v cavemem~command -v npm~npm install -g cavemem && cavemem install"
+  "fable~fable-recall (recall MCP + hooks)~command -v fable~command -v uv~uv tool install fable-recall && fable install"
+  "caveman~caveman (caveman-speak skill, 65% fewer output tokens)~test -d \"\$CLAUDE_DIR/plugins/cache/caveman\" || type -P caveman-code~command -v node~curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash~runs caveman's official installer (curl .../install.sh | bash, which delegates to npx github:JuliusBrussee/caveman) to install the caveman-speak skill into your agent config"
   "flue~flue (desktop-app scripting bridge skill)~command -v flue~command -v uv~uv tool install flue"
   "claudetell~claudetell (session traffic-light overlay)~test -f '$CLAUDETELL_DIR/claudetell.py'~command -v git && command -v uv~install_claudetell~presents destinations to pick (or type a path), clones FoamScience/claudetell there (or git pull if already present), then runs its own installer (uv run claudetell.py install) which registers claudetell's hooks in settings.json"
   "waggle~waggle~command -v waggle~command -v cargo~cargo install waggle-cli"
@@ -264,6 +265,10 @@ deps_menu() {
     for rec in "${DEPS[@]}"; do
       IFS='~' read -r key label check prereq install consent <<<"$rec"
       [ "$key" = "$p" ] || continue
+      if eval "$check" >/dev/null 2>&1; then
+        ok "$key already installed"
+        break
+      fi
       if ! eval "$prereq" >/dev/null 2>&1; then
         warn "$key skipped: prereq missing ($prereq)"
         break
