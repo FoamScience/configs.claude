@@ -197,6 +197,7 @@ DEPS=(
   "flue~flue (desktop-app scripting bridge skill)~command -v flue~command -v uv~uv tool install flue"
   "claudetell~claudetell (session traffic-light overlay)~test -f '$CLAUDETELL_DIR/claudetell.py'~command -v git && command -v uv~install_claudetell~presents destinations to pick (or type a path), clones FoamScience/claudetell there (or git pull if already present), then runs its own installer (uv run claudetell.py install) which registers claudetell's hooks in settings.json"
   "waggle~waggle~command -v waggle~command -v cargo~cargo install waggle-cli"
+  "fablize~fablize (always-on operating harness)~test -f \"\$HOME/.fablize/progress.json\"~test -f \"\$CLAUDE_DIR/plugins/marketplaces/fablize/setup/setup.sh\"~bash \"\$CLAUDE_DIR/plugins/marketplaces/fablize/setup/setup.sh\"~runs fablize's own setup.sh, which injects its always-on operating block into your CLAUDE.md (backed up first). Answer 'g' at its prompt for global scope"
   "styleseed~styleseed-design-review (UI 'looks AI-generated' gate)~test -d '$CLAUDE_DIR/skills/styleseed-design-review' || test -d '$HOME/.agents/skills/styleseed-design-review'~command -v npx~install_styleseed~runs 'npx skills add bitjaru/styleseed', installing StyleSeed's skills into your agent config and writing its rules files"
 )
 
