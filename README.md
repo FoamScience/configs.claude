@@ -72,7 +72,7 @@ only if you select it, its toolchain is present, and it isn't already installed
 | Tool | Installs via | Prereq |
 |------|--------------|--------|
 | `cavemem` | `npm install -g cavemem && cavemem install` | npm |
-| `fable` | `uv tool install fable-recall && fable install` | uv |
+| `fable` | `uv tool install fable-recall && fable install`, then disables its externalize note (see [fable-recall vs. Fable 5 safeguards](#fable-recall-vs-fable-5-safeguards)) | uv |
 | `caveman` | `curl -fsSL …/caveman/main/install.sh \| bash` (asks first) | node |
 | `flue` | `uv tool install flue` | uv |
 | `claudetell` | clone + its own installer (asks first) | git, uv |
@@ -104,6 +104,31 @@ the caveman-speak skill (fewer output tokens, code kept byte-exact). Installed
 its original way, the curl one-liner (consent-gated): `curl -fsSL
 https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash`.
 It's also available as the bundled `caveman@caveman` marketplace plugin.
+
+### fable-recall vs. Fable 5 safeguards
+
+fable-recall injects a `<fable-externalize>` note into **every** user prompt
+(its `UserPromptSubmit` hook). That note's wording — *"your thinking blocks and
+tool results get pruned; only your prose survives"* — reads as a
+chain-of-thought manipulation attempt to **Fable 5's safeguard classifier**, so
+with fable's hooks active every message errors with *"Fable 5's safeguards
+flagged this message"* (while `claude --safe-mode`, which skips hooks, works).
+Confirmed by bisection: replaying each injected block to Fable 5 in safe mode,
+only this one flags, deterministically; dropping the parenthetical un-flags it.
+
+fable has a built-in off-switch for the note (everything else — search,
+indexing, compaction recovery — is unaffected), and the installer flips it
+after `fable install`. For a fable that is **already installed**, apply it
+manually:
+
+```bash
+python3 -c "import sqlite3, pathlib; c = sqlite3.connect(pathlib.Path.home() / '.fable/fable.db'); \
+c.execute(\"INSERT INTO meta(key,value) VALUES('externalize_enabled','0') \
+ON CONFLICT(key) DO UPDATE SET value='0'\"); c.commit()"
+```
+
+To re-enable the note (e.g. when not using Fable 5), set the value back to
+`'1'` or delete the `externalize_enabled` row.
 
 `fablize` ([fivetaku/fablize](https://github.com/fivetaku/fablize)) is an
 always-on operating harness (evidence gates, investigation protocol, per-task
