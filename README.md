@@ -43,7 +43,7 @@ plugins listed in `enabledPlugins`.
   file is backed up, and re-running is idempotent (no duplicate growth).
 - Set `CLAUDE_CONFIG_DIR` to target a config dir other than `~/.claude`.
 
-## Choosing what to install (full control)
+## Choosing what to install
 
 - **Plugins / marketplaces** — edit `settings/settings.base.json`
   (`enabledPlugins`, `extraKnownMarketplaces`) *before* running. It's a plain
@@ -78,6 +78,7 @@ only if you select it, its toolchain is present, and it isn't already installed
 | `claudetell` | clone + its own installer (asks first) | git, uv |
 | `waggle` | `cargo install waggle-cli` | cargo |
 | `styleseed` | `npx skills add bitjaru/styleseed` (asks first) | npx (node) |
+| `fablize` | its own `setup/setup.sh` (asks first) | fablize plugin installed |
 
 `cavemem`, `fable`, and `claudetell` each **register their own hooks + MCP** into
 `settings.json` via their installer (`cavemem install`, `fable install`,
@@ -104,13 +105,20 @@ its original way, the curl one-liner (consent-gated): `curl -fsSL
 https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash`.
 It's also available as the bundled `caveman@caveman` marketplace plugin.
 
+`fablize` ([fivetaku/fablize](https://github.com/fivetaku/fablize)) is an
+always-on operating harness (evidence gates, investigation protocol, per-task
+routing). The plugin is enabled in `settings.base.json`; to turn on **global
+mode**, pick `fablize` in the deps menu and answer `g` at its prompt — its
+`setup.sh` injects the operating block into your global `~/.claude/CLAUDE.md`
+(backing it up first) and records `~/.fablize/progress.json`.
+
 
 ### Bundled marketplaces
 
 `claude-context-mode`, `superpowers-marketplace`, `plannotator`,
 `claude-code-workflows`, `caveman`, `claude-hud`, `diagram-design`,
 `claude-paper`, `yoonho-plugins`, `ponytail`, `ai-research-skills`, `ecc`,
-`hivemind` (plus the built-in `claude-plugins-official`).
+`hivemind`, `fablize` (plus the built-in `claude-plugins-official`).
 
 ## The `--personal` fragment
 
