@@ -1,0 +1,137 @@
+{
+  "permissions": {
+    "defaultMode": "auto"
+  },
+  "model": "fable",
+  "effortLevel": "high",
+  "tui": "fullscreen",
+  "autoCompactEnabled": true,
+  "autoDreamEnabled": true,
+  "awaySummaryEnabled": false,
+  "switchModelsOnFlag": false,
+  "preferredNotifChannel": "notifications_disabled",
+  "inputNeededNotifEnabled": true,
+  "agentPushNotifEnabled": true,
+  "statusLine": {
+    "type": "command",
+    "command": "bash -c 'plugin_dir=$(ls -d \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}\"/plugins/cache/claude-hud/claude-hud/*/ 2>/dev/null | awk -F/ '\"'\"'{ print $(NF-1) \"\\t\" $(0) }'\"'\"' | sort -t. -k1,1n -k2,2n -k3,3n -k4,4n | tail -1 | cut -f2-); exec node \"${plugin_dir}dist/index.js\"'"
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}/hooks/caveman-ultra.txt\"",
+            "timeout": 5,
+            "statusMessage": "Loading caveman ultra..."
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}/hooks/context-mode-cache-heal.mjs\""
+          }
+        ]
+      }
+    ]
+  },
+  "enabledPlugins": {
+    "context-mode@claude-context-mode": true,
+    "superpowers@claude-plugins-official": false,
+    "clangd-lsp@claude-plugins-official": false,
+    "caveman@caveman": true,
+    "claude-hud@claude-hud": true,
+    "claude-paper@claude-paper": true,
+    "rust-analyzer-lsp@claude-plugins-official": true,
+    "atlassian@claude-plugins-official": true,
+    "diagram-design@diagram-design": true,
+    "frontend-design@claude-plugins-official": true,
+    "ponytail@ponytail": true,
+    "context7@claude-plugins-official": true,
+    "research-workspace@ai-research-skills": true
+  },
+  "extraKnownMarketplaces": {
+    "claude-context-mode": {
+      "source": {
+        "source": "github",
+        "repo": "mksglu/claude-context-mode"
+      }
+    },
+    "superpowers-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "obra/superpowers-marketplace"
+      }
+    },
+    "plannotator": {
+      "source": {
+        "source": "github",
+        "repo": "backnotprop/plannotator"
+      }
+    },
+    "claude-code-workflows": {
+      "source": {
+        "source": "github",
+        "repo": "wshobson/agents"
+      }
+    },
+    "caveman": {
+      "source": {
+        "source": "github",
+        "repo": "JuliusBrussee/caveman"
+      }
+    },
+    "claude-hud": {
+      "source": {
+        "source": "github",
+        "repo": "jarrodwatts/claude-hud"
+      }
+    },
+    "diagram-design": {
+      "source": {
+        "source": "github",
+        "repo": "cathrynlavery/diagram-design"
+      }
+    },
+    "claude-paper": {
+      "source": {
+        "source": "github",
+        "repo": "alaliqing/claude-paper"
+      }
+    },
+    "yoonho-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "yoonhogo/claude-plugins"
+      }
+    },
+    "ponytail": {
+      "source": {
+        "source": "github",
+        "repo": "DietrichGebert/ponytail"
+      }
+    },
+    "ai-research-skills": {
+      "source": {
+        "source": "github",
+        "repo": "WenyuChiou/ai-research-skills"
+      }
+    },
+    "ecc": {
+      "source": {
+        "source": "git",
+        "url": "https://github.com/affaan-m/ECC.git"
+      }
+    },
+    "hivemind": {
+      "source": {
+        "source": "github",
+        "repo": "activeloopai/hivemind"
+      }
+    }
+  }
+}

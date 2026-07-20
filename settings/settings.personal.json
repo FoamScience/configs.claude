@@ -1,0 +1,6 @@
+{
+  "_comment": "OPT-IN fragment (install.sh --personal): only permission-prompt-suppression flags. Tool hooks/MCP are NOT here — cavemem, fable, and claudetell each register their own via their installers (cavemem install / fable install / uv run claudetell.py install), run from the deps menu.",
+  "skipDangerousModePermissionPrompt": true,
+  "skipWorkflowUsageWarning": true,
+  "skipAutoPermissionPrompt": true
+}
