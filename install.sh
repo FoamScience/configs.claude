@@ -189,14 +189,40 @@ install_styleseed() { # StyleSeed UI design gate — installs via its own `skill
   info "then run /ss-setup in Claude Code to lock your color/font/motion"
 }
 
+disable_fable_externalize() { # fable's <fable-externalize> prompt-note trips Fable 5 safeguards (see README) — suppress it via its own off-switch
+  python3 - <<'PY'
+import sqlite3, sys
+from pathlib import Path
+db = Path.home() / ".fable" / "fable.db"
+try:
+    conn = sqlite3.connect(db)
+    conn.execute("INSERT INTO meta(key,value) VALUES('externalize_enabled','0')"
+                 " ON CONFLICT(key) DO UPDATE SET value='0'")
+    conn.commit(); conn.close()
+except Exception as e:
+    sys.exit(f"could not set externalize_enabled=0 in {db}: {e}")
+PY
+  if [ $? -eq 0 ]; then
+    ok "fable externalize note disabled (Fable 5 safeguards workaround — see README)"
+  else
+    warn "fable installed, but disabling its externalize note failed — apply the README one-liner manually"
+  fi
+}
+
+install_fable() { # install fable-recall, let it register its own hooks, then disable the externalize note
+  uv tool install fable-recall && fable install || return 1
+  disable_fable_externalize
+}
+
 # Records are ~-delimited: key~label~check~prereq~install  (checks may contain pipes)
 DEPS=(
   "cavemem~cavemem (memory MCP + hooks)~command -v cavemem~command -v npm~npm install -g cavemem && cavemem install"
-  "fable~fable-recall (recall MCP + hooks)~command -v fable~command -v uv~uv tool install fable-recall && fable install"
+  "fable~fable-recall (recall MCP + hooks)~command -v fable~command -v uv~install_fable"
   "caveman~caveman (caveman-speak skill, 65% fewer output tokens)~test -d \"\$CLAUDE_DIR/plugins/cache/caveman\" || type -P caveman-code~command -v node~curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash~runs caveman's official installer (curl .../install.sh | bash, which delegates to npx github:JuliusBrussee/caveman) to install the caveman-speak skill into your agent config"
   "flue~flue (desktop-app scripting bridge skill)~command -v flue~command -v uv~uv tool install flue"
   "claudetell~claudetell (session traffic-light overlay)~test -f '$CLAUDETELL_DIR/claudetell.py'~command -v git && command -v uv~install_claudetell~presents destinations to pick (or type a path), clones FoamScience/claudetell there (or git pull if already present), then runs its own installer (uv run claudetell.py install) which registers claudetell's hooks in settings.json"
   "waggle~waggle~command -v waggle~command -v cargo~cargo install waggle-cli"
+  "fablize~fablize (always-on operating harness)~test -f \"\$HOME/.fablize/progress.json\"~test -f \"\$CLAUDE_DIR/plugins/marketplaces/fablize/setup/setup.sh\"~bash \"\$CLAUDE_DIR/plugins/marketplaces/fablize/setup/setup.sh\"~runs fablize's own setup.sh, which injects its always-on operating block into your CLAUDE.md (backed up first). Answer 'g' at its prompt for global scope"
   "styleseed~styleseed-design-review (UI 'looks AI-generated' gate)~test -d '$CLAUDE_DIR/skills/styleseed-design-review' || test -d '$HOME/.agents/skills/styleseed-design-review'~command -v npx~install_styleseed~runs 'npx skills add bitjaru/styleseed', installing StyleSeed's skills into your agent config and writing its rules files"
 )
 
